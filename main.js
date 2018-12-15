@@ -1,7 +1,8 @@
 /*
 variables
 */
-var model;
+var model_VGG;
+var model_LeNet;
 var canvas;
 var classNames = [];
 var canvas;
@@ -35,16 +36,18 @@ $(function() {
 /*
 set the table of the predictions 
 */
-function setTable(top5, probs) {
+function setTable(top3, probs, net) {
     //loop over the predictions 
-    for (var i = 0; i < top5.length; i++) {
-        let sym = document.getElementById('sym' + (i + 1))
-        let prob = document.getElementById('prob' + (i + 1))
-        sym.innerHTML = top5[i]
-        prob.innerHTML = Math.round(probs[i] * 100)
+    prob_sum = probs[1] + probs[2] + probs[0]
+    for (var i = 0; i < top3.length; i++) {
+        let sym = document.getElementById(net + '_'+'sym' + (i + 1))
+        let prob = document.getElementById(net + '_'+'prob' + (i + 1))
+        sym.innerHTML = top3[i]
+        console.log(probs[i])
+        prob.innerHTML = Math.round(probs[i] /prob_sum * 100)
     }
     //create the pie 
-    createPie(".pieID.legend", ".pieID.pie");
+    createPie(".pieID."+net + "_"+"legend", ".pieID."+net + "_"+"pie");
 
 }
 
@@ -115,15 +118,29 @@ function getFrame() {
         const imgData = getImageData()
 
         //get the prediction 
-        const pred = model.predict(preprocess(imgData)).dataSync()
+        const pred_VGG = model_VGG.predict(preprocess(imgData)).dataSync()
+        const pred_LeNet = model_LeNet.predict(preprocess(imgData)).dataSync()
+        const pred_ResNet = model_ResNet.predict(preprocess(imgData)).dataSync()
 
-        //find the top 5 predictions 
-        const indices = findIndicesOfMax(pred, 5)
-        const probs = findTopValues(pred, 5)
-        const names = getClassNames(indices)
 
+        //find the top 3 predictions 
+        const indices_VGG = findIndicesOfMax(pred_VGG, 3)
+        const probs_VGG = findTopValues(pred_VGG, 3)
+        const names_VGG = getClassNames(indices_VGG)
+
+        const indices_LeNet = findIndicesOfMax(pred_LeNet, 3)
+        const probs_LeNet = findTopValues(pred_LeNet, 3)
+        const names_LeNet = getClassNames(indices_LeNet)
+
+        const indices_ResNet = findIndicesOfMax(pred_ResNet, 3)
+        const probs_ResNet = findTopValues(pred_ResNet, 3)
+        const names_ResNet = getClassNames(indices_ResNet)
         //set the table 
-        setTable(names, probs)
+        setTable(names_VGG, probs_VGG, 'vgg')
+        setTable(names_LeNet, probs_LeNet, 'le')
+        setTable(names_ResNet, probs_ResNet, 'res')
+
+
     }
 
 }
@@ -142,10 +159,13 @@ function getClassNames(indices) {
 load the class names 
 */
 async function loadDict() {
-    if (mode == 'ar')
-        loc = 'model3/class_names_ar.txt'
-    else
-        loc = 'model3/class_names.txt'
+    if (mode == 'ar'){
+        loc = 'model_LeNet/class_names_ar.txt'
+    }
+    else{
+        loc = 'model_LeNet/class_names.txt'
+    }
+        
     
     await $.ajax({
         url: loc,
@@ -182,12 +202,12 @@ function findIndicesOfMax(inp, count) {
 }
 
 /*
-find the top 5 predictions
+find the top 3 predictions
 */
 function findTopValues(inp, count) {
     var outp = [];
     let indices = findIndicesOfMax(inp, count)
-    // show 5 greatest scores
+    // show 3 greatest scores
     for (var i = 0; i < indices.length; i++)
         outp[i] = inp[indices[i]]
     return outp
@@ -222,10 +242,15 @@ async function start(cur_mode) {
     mode = cur_mode
     
     //load the model 
-    model = await tf.loadModel('model3/model.json')
+    model_VGG = await tf.loadModel('model_VGG/model.json')
+    model_LeNet = await tf.loadModel('model_LeNet/model.json')
+    model_ResNet = await tf.loadModel('model3/model.json')
+
     
     //warm up 
-    model.predict(tf.zeros([1, 28, 28, 1]))
+    model_VGG.predict(tf.zeros([1, 28, 28, 1]))
+    model_LeNet.predict(tf.zeros([1, 28, 28, 1]))
+    model_ResNet.predict(tf.zeros([1, 28, 28, 1]))
     
     //allow drawing on the canvas 
     allowDrawing()
