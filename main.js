@@ -3,6 +3,7 @@ variables
 */
 var model_VGG;
 var model_LeNet;
+var model_ResNet;
 var canvas;
 var classNames = [];
 var canvas;
@@ -47,7 +48,7 @@ function setTable(top3, probs, net) {
         prob.innerHTML = Math.round(probs[i] /prob_sum * 100)
     }
     //create the pie 
-    createPie(".pieID."+net + "_"+"legend", ".pieID."+net + "_"+"pie");
+    createPie(".pieID."+net + "_"+"legend", ".pieID."+net + "_"+"pie", net);
 
 }
 
@@ -244,7 +245,7 @@ async function start(cur_mode) {
     //load the model 
     model_VGG = await tf.loadModel('model_VGG/model.json')
     model_LeNet = await tf.loadModel('model_LeNet/model.json')
-    model_ResNet = await tf.loadModel('model3/model.json')
+    model_ResNet = await tf.loadModel('model_ResNet/model.json')
 
     
     //warm up 
