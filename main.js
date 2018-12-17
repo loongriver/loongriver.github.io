@@ -6,6 +6,7 @@ var model_LeNet;
 var model_ResNet;
 var canvas;
 var classNames = [];
+var res_classNames = []
 var canvas;
 var coords = [];
 var mousePressed = false;
@@ -135,7 +136,7 @@ function getFrame() {
 
         const indices_ResNet = findIndicesOfMax(pred_ResNet, 3)
         const probs_ResNet = findTopValues(pred_ResNet, 3)
-        const names_ResNet = getClassNames(indices_ResNet)
+        const names_ResNet = getResClassNames(indices_ResNet)
         //set the table 
         setTable(names_VGG, probs_VGG, 'vgg')
         setTable(names_LeNet, probs_LeNet, 'le')
@@ -156,6 +157,13 @@ function getClassNames(indices) {
     return outp
 }
 
+function getResClassNames(indices){
+    var outp = []
+    for (var i = 0; i < indices.length; i++)
+        outp[i] = res_classNames[indices[i]]
+    return outp
+}
+
 /*
 load the class names 
 */
@@ -165,6 +173,7 @@ async function loadDict() {
     }
     else{
         loc = 'model_LeNet/class_names.txt'
+        loc_res = 'model_ResNet/class_names.txt'
     }
         
     
@@ -172,6 +181,12 @@ async function loadDict() {
         url: loc,
         dataType: 'text',
     }).done(success);
+
+    await $.ajax({
+        url: loc_res,
+        dataType: 'text',
+    }).done(res_success);
+
 }
 
 /*
@@ -182,6 +197,15 @@ function success(data) {
     for (var i = 0; i < lst.length - 1; i++) {
         let symbol = lst[i]
         classNames[i] = symbol
+        
+    }
+}
+function res_success(data) {
+    const lst = data.split(/\n/)
+    for (var i = 0; i < lst.length - 1; i++) {
+        let symbol = lst[i]
+        res_classNames[i] = symbol
+        
     }
 }
 
